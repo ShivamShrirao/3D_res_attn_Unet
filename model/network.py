@@ -1,23 +1,7 @@
 from tensorflow import tf
 from tensorflow.keras import layers
 
-from .conv_blocks import ConvNorm, NormAct, AttnBottleneckBlock
-
-
-def down_stack(x, filters, blocks, strides=1, frac_dv=0, **kwargs):
-    x = AttnBottleneckBlock(filters, frac_dv=frac_dv, strides=strides, **kwargs)(x)
-    for i in range(1, blocks):
-        x = AttnBottleneckBlock(filters, frac_dv=frac_dv, **kwargs)(x)
-    return x
-
-def up_stack(x, skip, filters, blocks, strides=1, frac_dv=0, **kwargs):
-    if strides > 1:
-        x = layers.UpSampling3D(data_format="channels_first")(x)
-    x = layers.Concatenate(axis=1)([x, skip])
-
-    for i in range(blocks):
-        x = AttnBottleneckBlock(filters, frac_dv=frac_dv, **kwargs)(x)
-    return x
+from .conv_blocks import ConvNorm, NormAct, down_stack, up_stack
 
 
 def enc_dec(x, frac_dv, stack_args):     # x(64,64,96,80)
