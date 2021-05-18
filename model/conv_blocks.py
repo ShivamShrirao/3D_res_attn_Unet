@@ -72,7 +72,7 @@ class ConvNorm(layers.Layer):
         return x
 
 
-## TODO: Try basic block instead of bottleneck.
+## TODO: Try basic block and inverted resblock instead of bottleneck,
 class AttnBottleneckBlock(layers.Layer):
     def __init__(self, filters, strides=1, activation=tf.nn.relu, expansion=4, dp_rate=0, dropout_type='Spatial',
                  groups=1, norm='gn', squeeze_attn=True, frac_dv=0, nheads=8, **kwargs):

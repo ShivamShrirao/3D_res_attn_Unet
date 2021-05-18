@@ -14,7 +14,7 @@ class AbsPosEmb(layers.Layer):
         self.emb_d = self.add_weight("emb_d", shape=(1, 1, dim, D, 1, 1), initializer="truncated_normal", trainable=True)
         self.emb_h = self.add_weight("emb_h", shape=(1, 1, dim, 1, H, 1), initializer="truncated_normal", trainable=True)
         self.emb_w = self.add_weight("emb_w", shape=(1, 1, dim, 1, 1, W), initializer="truncated_normal", trainable=True)
-        self.restore_shape = layers.Reshape(target_shape=(1, dim, -1))
+        self.restore_shape = layers.Reshape(target_shape=(1, 1, dim, D*H*W))
 
     def call(self, q):
         emb = self.emb_d + self.emb_h + self.emb_w      # [1, 1, dv/N, D, H, W]
