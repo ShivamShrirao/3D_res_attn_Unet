@@ -18,7 +18,7 @@ def enc_dec(x, frac_dv, stack_args):     # x(64,64,96,80)
     return y
 
 
-def build_network(cfg, input_shape=(4,128,192,160), classes=3):
+def build_network(cfg, input_shape=(4,128,192,160), classes=4):
     stack_args = {'activation': cfg['activation'], 'groups': cfg['groups'], 'norm': cfg['norm'],
                   'dp_rate': cfg['dp_rate'], 'dropout_type': cfg['dropout_type']}
 
