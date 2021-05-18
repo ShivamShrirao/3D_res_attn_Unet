@@ -1,9 +1,15 @@
+import tensorflow as tf
+import tensorflow_addons as tfa
+import numpy as np
+import SimpleITK as sitk
+
 def preprocess_label(lbl):
     empty = lbl == 0
     ncr = lbl == 1
     ed = lbl == 2
     et = lbl == 4
-    return tf.stack([empty, ncr, ed, et])
+    lbl = tf.stack([empty, ncr, ed, et])
+    return tf.cast(lbl, tf.uint8)
 
 def read_img(path):
     img = sitk.GetArrayFromImage(sitk.ReadImage(path))
@@ -21,7 +27,8 @@ def load_img(path_list):
 def load_paths(paths):
     img, lbl = load_img([x.decode() for x in paths.numpy()])
     return img, lbl
-load_paths_wrapper = lambda x: tf.py_function(load_paths, [x], (tf.uint8, tf.bool))
+
+load_paths_wrapper = lambda x: tf.py_function(load_paths, [x], (tf.uint8, tf.uint8))
 
 # only does in X axis
 def random_rotate3D(img, lbl):          # img [C, D, H, W]
