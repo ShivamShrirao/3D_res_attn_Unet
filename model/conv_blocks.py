@@ -24,7 +24,7 @@ class NormAct(layers.Layer):
 
 
 class ConvNorm(layers.Layer):
-    def __init__(filters, kernel_size=3, strides=1, groups=1, deconv=False, padding='same'
+    def __init__(filters, kernel_size=3, strides=1, groups=1, deconv=False, padding='same',
                  activation=tf.nn.leaky_relu, do_norm_act=True, norm='gn', gn_grps=8, **kwargs):
         super().__init__(**kwargs)
         self.lyrs = list()
