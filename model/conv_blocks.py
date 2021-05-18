@@ -58,7 +58,7 @@ class ConvNorm(layers.Layer):
 ## TODO: Try basic block instead of bottleneck.
 class AttnBottleneckBlock(layers.Layer):
     def __init__(self, filters, strides=1, activation=tf.nn.relu, expansion=4, dp_rate=0, dropout_type='Spatial',
-                 groups=1, norm='gn', squeeze_attn=True, dv=0, nheads=8, **kwargs):
+                 groups=1, norm='gn', squeeze_attn=True, frac_dv=0, nheads=8, **kwargs):
         super().__init__(**kwargs)
         self.filters = filters
         self.expansion = expansion
@@ -69,7 +69,8 @@ class AttnBottleneckBlock(layers.Layer):
         self.norm = norm
         self.squeeze_attn = squeeze_attn
         self.dropout = None
-        self.dv = dv
+        self.dv = int(filters*frac_dv)
+        self.conv_filters = filters - self.dv
         self.nheads = nheads
         self.norm_act = NormAct(activation=activation, norm=norm)
         if dp_rate:
@@ -103,11 +104,11 @@ class AttnBottleneckBlock(layers.Layer):
 
         if self.strides > 1:        # TODO: compare with strided convolution
             x = layers.AveragePooling3D(self.strides, data_format="channels_first")(x)
-        if self.filters > 0:
-            x_s = ConvNorm(self.filters, kernel_size=3, activation=self.activation, norm=self.norm, groups=self.groups)(x)
+        if self.conv_filters > 0:
+            x_s = ConvNorm(self.conv_filters, kernel_size=3, do_norm_act=False, groups=self.groups)(x)
         if self.dv > 0:
             x = MHSA3D(dv=self.dv, nheads=self.nheads)(x)
-            x_s = layers.Concatenate(axis=1)([x, x_s]) if self.filters > 0 else x
+            x_s = layers.Concatenate(axis=1)([x, x_s]) if self.conv_filters > 0 else x
 
         x = NormAct(activation=self.activation, norm=self.norm)(x_s)
 
