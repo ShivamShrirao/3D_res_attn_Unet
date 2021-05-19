@@ -23,6 +23,13 @@ def up_stack(x, skip, filters, nblocks, block, strides=1, frac_dv=0, **kwargs):
     return x
 
 
+def hard_sigmoid(x):
+    return tf.keras.activations.relu((x + 3.), max_value=6.) * (1. / 6.)
+
+def hard_swish(x):
+    return hard_sigmoid(x) * x
+
+
 class NormAct(layers.Layer):
     def __init__(self, activation=tf.nn.leaky_relu, norm='gn', gn_grps=8, **kwargs):
         super().__init__(**kwargs)
@@ -33,7 +40,10 @@ class NormAct(layers.Layer):
             self.norm = tfa.layers.GroupNormalization(groups=gn_grps, axis=1)
         else:
             self.norm = layers.BatchNormalization(axis=1)
-        activation = tf.nn.leaky_relu if activation=='leaky_relu' else activation
+        if activation == 'leaky_relu':
+            activation = tf.nn.leaky_relu
+        elif activation == 'hard_swish':
+            activation =  hard_swish
         self.act = layers.Activation(activation)
 
     def call(self, inp):
@@ -214,7 +224,6 @@ class InvertedResBlock(AttnBottleneckBlock):
             shortcut.add(layers.AveragePooling3D(self.strides, data_format="channels_first"))
         if in_filters != self.out_filters:
             shortcut.add(ConvNorm(self.out_filters, kernel_size=1, activation='linear', norm=self.norm))
-            # DO NORM INIT
         return shortcut
 
     def call(self, inp):
