@@ -41,9 +41,6 @@ class NormAct(layers.Layer):
         x = self.act(x)
         return x
 
-    def cast_inputs(self, inputs):
-        return self._mixed_precision_policy.cast_to_lowest(inputs)
-
     def get_config(self):
         base_config = super().get_config()
         return dict(list(base_config.items()) + list(self.l_config.items()))
@@ -87,9 +84,6 @@ class ConvNorm(layers.Layer):
         for lyr in self.lyrs:
             x = lyr(x)
         return x
-
-    def cast_inputs(self, inputs):
-        return self._mixed_precision_policy.cast_to_lowest(inputs)
 
 
 ## TODO: Try basic block and inverted resblock instead of bottleneck,
@@ -172,6 +166,3 @@ class AttnBottleneckBlock(layers.Layer):
         x = self.net(x)
         x = x + identity
         return x
-
-    def cast_inputs(self, inputs):
-        return self._mixed_precision_policy.cast_to_lowest(inputs)
