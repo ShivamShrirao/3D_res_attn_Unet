@@ -32,7 +32,6 @@ class MHSA3D(layers.Layer):
     def __init__(self, dv=None, nheads=8, prev_kq=None, **kwargs):
         super().__init__(**kwargs)
         self.l_config = locals()
-        self.l_config.pop('self')
         self.dv = dv
         self.scale = (dv//nheads)**-0.5
         self.nheads = nheads

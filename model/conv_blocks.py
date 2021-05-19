@@ -27,7 +27,6 @@ class NormAct(layers.Layer):
     def __init__(self, activation=tf.nn.leaky_relu, norm='gn', gn_grps=8, **kwargs):
         super().__init__(**kwargs)
         self.l_config = locals()
-        self.l_config.pop('self')
         if norm == 'gn':
             # gn_grps = compute_factors(gn_grps, filters, gn_grps)
             self.norm = tfa.layers.GroupNormalization(groups=gn_grps, axis=1)
@@ -51,7 +50,6 @@ class ConvNorm(layers.Layer):
                  activation=tf.nn.leaky_relu, do_norm_act=True, norm='gn', gn_grps=8, **kwargs):
         super().__init__(**kwargs)
         self.l_config = locals()
-        self.l_config.pop('self')
         self.filters = filters
         self.kernel_size = kernel_size
         self.strides = strides
@@ -75,8 +73,7 @@ class ConvNorm(layers.Layer):
         self.groups = compute_factors(in_filters, self.filters, self.groups) # just to make sure filters divisible by groups
         bias_state = (not self.do_norm_act) and self.use_bias
         self.lyrs.append(layers.Conv3D(self.filters, kernel_size=self.kernel_size, strides=self.strides, padding=self.padding,
-                                       use_bias=bias_state , data_format="channels_first", groups=self.groups,
-                                       kernel_initializer=tf.keras.initializers.glorot_normal()))
+                                       use_bias=bias_state , data_format="channels_first", groups=self.groups))
         if self.do_norm_act:
             self.lyrs.append(NormAct(activation=self.activation, norm=self.norm, gn_grps=self.gn_grps))
 
@@ -93,7 +90,6 @@ class AttnBottleneckBlock(layers.Layer):
                  groups=1, norm='gn', squeeze_attn=True, frac_dv=0, nheads=8, **kwargs):
         super().__init__(**kwargs)
         self.l_config = locals()
-        self.l_config.pop('self')
         self.filters = filters
         self.expansion = expansion
         self.strides = strides
