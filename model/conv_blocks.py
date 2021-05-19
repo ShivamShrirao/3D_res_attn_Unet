@@ -50,7 +50,7 @@ class NormAct(layers.Layer):
 
 
 class ConvNorm(layers.Layer):
-    def __init__(self, filters, kernel_size=3, strides=1, groups=1, deconv=False, padding='same',
+    def __init__(self, filters, kernel_size=3, strides=1, groups=1, deconv=False, padding='same', use_bias=True,
                  activation=tf.nn.leaky_relu, do_norm_act=True, norm='gn', gn_grps=8, **kwargs):
         super().__init__(**kwargs)
         self.l_config = locals()
@@ -59,6 +59,7 @@ class ConvNorm(layers.Layer):
         self.kernel_size = kernel_size
         self.strides = strides
         self.padding = padding
+        self.use_bias = use_bias
         self.groups = groups
         self.do_norm_act = do_norm_act
         self.activation = activation
@@ -75,8 +76,9 @@ class ConvNorm(layers.Layer):
         in_filters = input_shape[1]
         self.lyrs = list()
         self.groups = compute_factors(in_filters, self.filters, self.groups) # just to make sure filters divisible by groups
+        bias_state = (not self.do_norm_act) and self.use_bias
         self.lyrs.append(layers.Conv3D(self.filters, kernel_size=self.kernel_size, strides=self.strides, padding=self.padding,
-                                       use_bias=not self.do_norm_act, data_format="channels_first", groups=self.groups))
+                                       use_bias=bias_state , data_format="channels_first", groups=self.groups))
         if self.do_norm_act:
             self.lyrs.append(NormAct(activation=self.activation, norm=self.norm, gn_grps=self.gn_grps))
 
@@ -146,7 +148,7 @@ class AttnBottleneckBlock(layers.Layer):
         if self.strides > 1:        # TODO: compare with strided convolution
             x = layers.AveragePooling3D(self.strides, data_format="channels_first")(x)
         if self.conv_filters > 0:
-            x_s = ConvNorm(self.conv_filters, kernel_size=3, do_norm_act=False, groups=self.groups)(x)
+            x_s = ConvNorm(self.conv_filters, kernel_size=3, do_norm_act=False, use_bias=False, groups=self.groups)(x)
         if self.dv > 0:
             x = MHSA3D(dv=self.dv, nheads=self.nheads)(x)
             x_s = layers.Concatenate(axis=1)([x, x_s]) if self.conv_filters > 0 else x
