@@ -86,7 +86,6 @@ class ConvNorm(layers.Layer):
         return x
 
 
-## TODO: Try inverted resblock instead of bottleneck,
 class AttnBottleneckBlock(layers.Layer):
     def __init__(self, filters, strides=1, activation=tf.nn.relu, expansion=4, dp_rate=0, dropout_type='Spatial',
                  groups=1, norm='gn', squeeze_attn=True, frac_dv=0, nheads=8, **kwargs):
@@ -130,8 +129,7 @@ class AttnBottleneckBlock(layers.Layer):
             shortcut.add(layers.AveragePooling3D(self.strides, data_format="channels_first"))
         if in_filters != self.out_filters:
             self.short_inp = False
-            shortcut.add(ConvNorm(self.out_filters, kernel_size=1, strides=1, activation=self.activation,
-                                  do_norm_act=False))
+            shortcut.add(ConvNorm(self.out_filters, kernel_size=1, strides=1, do_norm_act=False))
         return shortcut
 
     def get_net(self, input_shape):
@@ -154,7 +152,7 @@ class AttnBottleneckBlock(layers.Layer):
         if self.dropout is not None:
             x = self.dropout(x)
 
-        x = ConvNorm(self.out_filters, kernel_size=1, activation=self.activation, do_norm_act=False)(x)
+        x = ConvNorm(self.out_filters, kernel_size=1, do_norm_act=False)(x)
         return tf.keras.Model(inputs=inp, outputs=x)
 
     def call(self, inp):
@@ -182,6 +180,48 @@ class BasicBlock(AttnBottleneckBlock):
             x = SqueezeExcite()(x)
         if self.dropout is not None:
             x = self.dropout(x)
-        x = ConvNorm(self.out_filters, kernel_size=3, activation=self.activation, do_norm_act=False)(x)
+        x = ConvNorm(self.out_filters, kernel_size=3, do_norm_act=False)(x)
 
         return tf.keras.Model(inputs=inp, outputs=x)
+
+
+class InvertedResBlock(AttnBottleneckBlock):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.out_filters = self.filters
+        self.exp_filters = self.filters * self.expansion
+    
+    def get_net(self, input_shape):
+        inp = layers.Input(shape=input_shape[1:])
+
+        x = ConvNorm(self.exp_filters, kernel_size=1, activation=self.activation, norm=self.norm)(inp)
+        x = ConvNorm(self.exp_filters, kernel_size=3, strides=self.strides, activation=self.activation, norm=self.norm,
+                     groups=self.exp_filters)(x)
+        if self.squeeze_attn:
+            x = SqueezeExcite()(x)
+        if self.dropout is not None:
+            x = self.dropout(x)
+        x = ConvNorm(self.out_filters, kernel_size=1, activation=self.activation, norm=self.norm)(x)
+
+        return tf.keras.Model(inputs=inp, outputs=x)
+
+    def get_shortcut(self, input_shape):
+        in_filters = input_shape[1]
+        # operations for shortcut
+        shortcut = tf.keras.Sequential()
+
+        if self.strides>1:
+            shortcut.add(layers.AveragePooling3D(self.strides, data_format="channels_first"))
+        if in_filters != self.out_filters:
+            shortcut.add(ConvNorm(self.out_filters, kernel_size=1, activation='linear', norm=self.norm))
+            # DO NORM INIT
+        return shortcut
+
+    def call(self, inp):
+        x = inp
+
+        identity = self.shortcut(x)
+
+        x = self.net(x)
+        x = x + identity
+        return x
