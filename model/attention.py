@@ -27,10 +27,15 @@ class AbsPosEmb(layers.Layer):
         base_config = super().get_config()
         return dict(list(base_config.items()) + list(l_config.items()))
 
+    def cast_inputs(self, inputs):
+        return self._mixed_precision_policy.cast_to_lowest(inputs)
+
 
 class MHSA3D(layers.Layer):
     def __init__(self, dv=None, nheads=8, prev_kq=None, **kwargs):
         super().__init__(**kwargs)
+        self.l_config = locals()
+        self.l_config.pop('self')
         self.dv = dv
         self.scale = (dv//nheads)**-0.5
         self.nheads = nheads
@@ -59,9 +64,8 @@ class MHSA3D(layers.Layer):
         return out
 
     def get_config(self):
-        l_config = {"dhw": self.dhw}
         base_config = super().get_config()
-        return dict(list(base_config.items()) + list(l_config.items()))
+        return dict(list(base_config.items()) + list(self.l_config.items()))
 
 
 class SqueezeExcite(layers.Layer):
@@ -88,3 +92,6 @@ class SqueezeExcite(layers.Layer):
         l_config = {"ratio": self.ratio}
         base_config = super().get_config()
         return dict(list(base_config.items()) + list(l_config.items()))
+
+    def cast_inputs(self, inputs):
+        return self._mixed_precision_policy.cast_to_lowest(inputs)

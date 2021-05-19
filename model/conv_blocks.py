@@ -26,6 +26,8 @@ def up_stack(x, skip, filters, blocks, strides=1, frac_dv=0, **kwargs):
 class NormAct(layers.Layer):
     def __init__(self, activation=tf.nn.leaky_relu, norm='gn', gn_grps=8, **kwargs):
         super().__init__(**kwargs)
+        self.l_config = locals()
+        self.l_config.pop('self')
         if norm == 'gn':
             # gn_grps = compute_factors(gn_grps, filters, gn_grps)
             self.norm = tfa.layers.GroupNormalization(groups=gn_grps, axis=1)
@@ -39,11 +41,20 @@ class NormAct(layers.Layer):
         x = self.act(x)
         return x
 
+    def cast_inputs(self, inputs):
+        return self._mixed_precision_policy.cast_to_lowest(inputs)
+
+    def get_config(self):
+        base_config = super().get_config()
+        return dict(list(base_config.items()) + list(self.l_config.items()))
+
 
 class ConvNorm(layers.Layer):
     def __init__(self, filters, kernel_size=3, strides=1, groups=1, deconv=False, padding='same',
                  activation=tf.nn.leaky_relu, do_norm_act=True, norm='gn', gn_grps=8, **kwargs):
         super().__init__(**kwargs)
+        self.l_config = locals()
+        self.l_config.pop('self')
         self.filters = filters
         self.kernel_size = kernel_size
         self.strides = strides
@@ -55,6 +66,10 @@ class ConvNorm(layers.Layer):
         self.gn_grps = gn_grps
         if deconv:
             print("[!] DeConv not ported yet.")
+
+    def get_config(self):
+        base_config = super().get_config()
+        return dict(list(base_config.items()) + list(self.l_config.items()))
 
     def build(self, input_shape):
         in_filters = input_shape[1]
@@ -71,12 +86,17 @@ class ConvNorm(layers.Layer):
             x = lyr(x)
         return x
 
+    def cast_inputs(self, inputs):
+        return self._mixed_precision_policy.cast_to_lowest(inputs)
+
 
 ## TODO: Try basic block and inverted resblock instead of bottleneck,
 class AttnBottleneckBlock(layers.Layer):
     def __init__(self, filters, strides=1, activation=tf.nn.relu, expansion=4, dp_rate=0, dropout_type='Spatial',
                  groups=1, norm='gn', squeeze_attn=True, frac_dv=0, nheads=8, **kwargs):
         super().__init__(**kwargs)
+        self.l_config = locals()
+        self.l_config.pop('self')
         self.filters = filters
         self.expansion = expansion
         self.strides = strides
@@ -95,6 +115,10 @@ class AttnBottleneckBlock(layers.Layer):
                 self.dropout = layers.SpatialDropout3D(dp_rate, data_format="channels_first")
             else:
                 self.dropout = layers.Dropout(dp_rate)
+
+    def get_config(self):
+        base_config = super().get_config()
+        return dict(list(base_config.items()) + list(self.l_config.items()))
 
     def build(self, input_shape):
         self.shortcut = self.get_shortcut(input_shape)
@@ -146,3 +170,6 @@ class AttnBottleneckBlock(layers.Layer):
         x = self.net(x)
         x = x + identity
         return x
+
+    def cast_inputs(self, inputs):
+        return self._mixed_precision_policy.cast_to_lowest(inputs)
