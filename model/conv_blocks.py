@@ -6,14 +6,14 @@ from .utils import compute_factors
 from .attention import SqueezeExcite, MHSA3D
 
 
-def down_stack(x, filters, nblocks, block=AttnBottleneckBlock, strides=1, frac_dv=0, **kwargs):
+def down_stack(x, filters, nblocks, block, strides=1, frac_dv=0, **kwargs):
     x = block(filters, frac_dv=frac_dv, strides=strides, **kwargs)(x)
     for i in range(1, nblocks):
         x = block(filters, frac_dv=frac_dv, **kwargs)(x)
     return x
 
 
-def up_stack(x, skip, filters, nblocks, block=AttnBottleneckBlock, strides=1, frac_dv=0, **kwargs):
+def up_stack(x, skip, filters, nblocks, block, strides=1, frac_dv=0, **kwargs):
     if strides > 1:
         x = layers.UpSampling3D(data_format="channels_first")(x)
     x = layers.Concatenate(axis=1)([x, skip])
@@ -27,6 +27,7 @@ class NormAct(layers.Layer):
     def __init__(self, activation=tf.nn.leaky_relu, norm='gn', gn_grps=8, **kwargs):
         super().__init__(**kwargs)
         self.l_config = locals()
+        self.l_config.pop('self')
         if norm == 'gn':
             # gn_grps = compute_factors(gn_grps, filters, gn_grps)
             self.norm = tfa.layers.GroupNormalization(groups=gn_grps, axis=1)
@@ -50,6 +51,7 @@ class ConvNorm(layers.Layer):
                  activation=tf.nn.leaky_relu, do_norm_act=True, norm='gn', gn_grps=8, **kwargs):
         super().__init__(**kwargs)
         self.l_config = locals()
+        self.l_config.pop('self')
         self.filters = filters
         self.kernel_size = kernel_size
         self.strides = strides
@@ -90,6 +92,7 @@ class AttnBottleneckBlock(layers.Layer):
                  groups=1, norm='gn', squeeze_attn=True, frac_dv=0, nheads=8, **kwargs):
         super().__init__(**kwargs)
         self.l_config = locals()
+        self.l_config.pop('self')
         self.filters = filters
         self.expansion = expansion
         self.strides = strides
