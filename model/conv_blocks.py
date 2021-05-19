@@ -75,7 +75,8 @@ class ConvNorm(layers.Layer):
         self.groups = compute_factors(in_filters, self.filters, self.groups) # just to make sure filters divisible by groups
         bias_state = (not self.do_norm_act) and self.use_bias
         self.lyrs.append(layers.Conv3D(self.filters, kernel_size=self.kernel_size, strides=self.strides, padding=self.padding,
-                                       use_bias=bias_state , data_format="channels_first", groups=self.groups))
+                                       use_bias=bias_state , data_format="channels_first", groups=self.groups,
+                                       kernel_initializer=tf.keras.initializers.glorot_normal()))
         if self.do_norm_act:
             self.lyrs.append(NormAct(activation=self.activation, norm=self.norm, gn_grps=self.gn_grps))
 
