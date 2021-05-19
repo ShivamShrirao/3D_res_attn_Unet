@@ -211,7 +211,7 @@ class InvertedResBlock(AttnBottleneckBlock):
             x = SqueezeExcite()(x)
         if self.dropout is not None:
             x = self.dropout(x)
-        x = ConvNorm(self.out_filters, kernel_size=1, activation=self.activation, norm=self.norm)(x)
+        x = ConvNorm(self.out_filters, kernel_size=1, activation='linear', norm=self.norm)(x)
 
         return tf.keras.Model(inputs=inp, outputs=x)
 
@@ -223,7 +223,7 @@ class InvertedResBlock(AttnBottleneckBlock):
         if self.strides>1:
             shortcut.add(layers.AveragePooling3D(self.strides, data_format="channels_first"))
         if in_filters != self.out_filters:
-            shortcut.add(ConvNorm(self.out_filters, kernel_size=1, activation='linear', norm=self.norm))
+            shortcut.add(ConvNorm(self.out_filters, kernel_size=1, activation=self.activation, norm=self.norm))
         return shortcut
 
     def call(self, inp):
