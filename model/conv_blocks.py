@@ -6,20 +6,20 @@ from .utils import compute_factors
 from .attention import SqueezeExcite, MHSA3D
 
 
-def down_stack(x, filters, blocks, strides=1, frac_dv=0, **kwargs):
-    x = AttnBottleneckBlock(filters, frac_dv=frac_dv, strides=strides, **kwargs)(x)
-    for i in range(1, blocks):
-        x = AttnBottleneckBlock(filters, frac_dv=frac_dv, **kwargs)(x)
+def down_stack(x, filters, nblocks, block=AttnBottleneckBlock, strides=1, frac_dv=0, **kwargs):
+    x = block(filters, frac_dv=frac_dv, strides=strides, **kwargs)(x)
+    for i in range(1, nblocks):
+        x = block(filters, frac_dv=frac_dv, **kwargs)(x)
     return x
 
 
-def up_stack(x, skip, filters, blocks, strides=1, frac_dv=0, **kwargs):
+def up_stack(x, skip, filters, nblocks, block=AttnBottleneckBlock, strides=1, frac_dv=0, **kwargs):
     if strides > 1:
         x = layers.UpSampling3D(data_format="channels_first")(x)
     x = layers.Concatenate(axis=1)([x, skip])
 
-    for i in range(blocks):
-        x = AttnBottleneckBlock(filters, frac_dv=frac_dv, **kwargs)(x)
+    for i in range(nblocks):
+        x = block(filters, frac_dv=frac_dv, **kwargs)(x)
     return x
 
 
@@ -84,7 +84,7 @@ class ConvNorm(layers.Layer):
         return x
 
 
-## TODO: Try basic block and inverted resblock instead of bottleneck,
+## TODO: Try inverted resblock instead of bottleneck,
 class AttnBottleneckBlock(layers.Layer):
     def __init__(self, filters, strides=1, activation=tf.nn.relu, expansion=4, dp_rate=0, dropout_type='Spatial',
                  groups=1, norm='gn', squeeze_attn=True, frac_dv=0, nheads=8, **kwargs):
@@ -115,7 +115,7 @@ class AttnBottleneckBlock(layers.Layer):
 
     def build(self, input_shape):
         self.shortcut = self.get_shortcut(input_shape)
-        self.net = self.get_bottleneck(input_shape)
+        self.net = self.get_net(input_shape)
 
     def get_shortcut(self, input_shape):
         in_filters = input_shape[1]
@@ -131,7 +131,7 @@ class AttnBottleneckBlock(layers.Layer):
                                   do_norm_act=False))
         return shortcut
 
-    def get_bottleneck(self, input_shape):
+    def get_net(self, input_shape):
         inp = layers.Input(shape=input_shape[1:])
         # Main bottleneck network
         x = ConvNorm(self.filters, kernel_size=1, activation=self.activation, norm=self.norm)(inp)
@@ -163,3 +163,22 @@ class AttnBottleneckBlock(layers.Layer):
         x = self.net(x)
         x = x + identity
         return x
+
+
+class BasicBlock(AttnBottleneckBlock):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.out_filters = self.filters
+    
+    def get_net(self, input_shape):
+        inp = layers.Input(shape=input_shape[1:])
+
+        x = ConvNorm(self.filters, kernel_size=3, strides=self.strides, activation=self.activation, norm=self.norm,
+                     groups=self.groups)(inp)
+        if self.squeeze_attn:
+            x = SqueezeExcite()(x)
+        if self.dropout is not None:
+            x = self.dropout(x)
+        x = ConvNorm(self.out_filters, kernel_size=3, activation=self.activation, do_norm_act=False)(x)
+
+        return tf.keras.Model(inputs=inp, outputs=x)
