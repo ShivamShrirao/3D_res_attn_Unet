@@ -7,7 +7,7 @@ unique_name_gen = tf.Graph()         # just for some custom naming to get unique
 get_name = lambda x: unique_name_gen.unique_name(x)
 
 class CustomLayer(layers.Layer):
-    def save_inits(locs):
+    def save_inits(self, locs):
         self.l_config = locs
         self.l_config.pop('self')
         self.l_config.pop('kwargs')
