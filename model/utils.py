@@ -12,6 +12,7 @@ class CustomLayer(layers.Layer):
         self.l_config.pop('self')
         self.l_config.pop('kwargs')
         self.l_config.pop('__class__')
+        self._name = get_name(self.name)
 
     def get_config(self):
         base_config = super().get_config()
