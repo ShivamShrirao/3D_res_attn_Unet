@@ -32,7 +32,7 @@ load_paths_wrapper = lambda x: tf.py_function(load_paths, [x], (tf.uint8, tf.uin
 
 # only does in X axis
 def random_rotate3D(img, lbl):          # img [C, D, H, W]
-    if tf.random.uniform([], 0, 1, dtype=tf.float32) <= 0.5:
+    if tf.random.uniform([], 0, 1, dtype=tf.float32) <= 0.2:
         img = tf.transpose(img, perm=[1,2,3,0])     # make channel last
         lbl = tf.transpose(lbl, perm=[1,2,3,0])
         angle = tf.random.uniform([], 0, 7, dtype=tf.float32)
@@ -43,7 +43,7 @@ def random_rotate3D(img, lbl):          # img [C, D, H, W]
     return img, lbl
 
 def random_flip3D(imgs, lbls):
-    for _ in range(tf.random.uniform([], 0 , 3, dtype=tf.int32)):
+    for _ in range(tf.random.uniform([], 0 , 2, dtype=tf.int32)):
         dim = tf.random.uniform([], 2, 5, dtype=tf.int32)
         imgs = tf.reverse(imgs, [dim])
         lbls = tf.reverse(lbls, [dim])

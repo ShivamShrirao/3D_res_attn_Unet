@@ -196,7 +196,7 @@ class InvertedResBlock(AttnBottleneckBlock):
             x = SqueezeExcite()(x)
         if self.dropout is not None:
             x = self.dropout(x)
-        x = ConvNorm(self.out_filters, kernel_size=1, activation='linear', norm=self.norm)(x)
+        x = ConvNorm(self.out_filters, kernel_size=1, activation=self.activation, norm=self.norm)(x)
 
         return tf.keras.Model(inputs=inp, outputs=x)
 
