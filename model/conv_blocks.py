@@ -2,8 +2,8 @@ import tensorflow as tf
 from tensorflow.keras import layers
 import tensorflow_addons as tfa
 
-from .utils import compute_factors
-from .attention import SqueezeExcite, MHSA3D
+from .utils import CustomLayer, compute_factors
+from .attention import SqueezeExcite, MHSA3D, AbsPosEmb
 
 
 def down_stack(x, filters, nblocks, block, strides=1, frac_dv=0, **kwargs):
@@ -30,11 +30,10 @@ def hard_swish(x):
     return hard_sigmoid(x) * x
 
 
-class NormAct(layers.Layer):
+class NormAct(CustomLayer):
     def __init__(self, activation=tf.nn.leaky_relu, norm='gn', gn_grps=8, **kwargs):
         super().__init__(**kwargs)
-        self.l_config = locals()
-        self.l_config.pop('self')
+        self.save_inits(locals())
         if norm == 'gn':
             # gn_grps = compute_factors(gn_grps, filters, gn_grps)
             self.norm = tfa.layers.GroupNormalization(groups=gn_grps, axis=1)
@@ -51,17 +50,12 @@ class NormAct(layers.Layer):
         x = self.act(x)
         return x
 
-    def get_config(self):
-        base_config = super().get_config()
-        return dict(list(base_config.items()) + list(self.l_config.items()))
 
-
-class ConvNorm(layers.Layer):
+class ConvNorm(CustomLayer):
     def __init__(self, filters, kernel_size=3, strides=1, groups=1, deconv=False, padding='same', use_bias=True,
                  activation=tf.nn.leaky_relu, do_norm_act=True, norm='gn', gn_grps=8, **kwargs):
         super().__init__(**kwargs)
-        self.l_config = locals()
-        self.l_config.pop('self')
+        self.save_inits(locals())
         self.filters = filters
         self.kernel_size = kernel_size
         self.strides = strides
@@ -74,10 +68,6 @@ class ConvNorm(layers.Layer):
         self.gn_grps = gn_grps
         if deconv:
             print("[!] DeConv not ported yet.")
-
-    def get_config(self):
-        base_config = super().get_config()
-        return dict(list(base_config.items()) + list(self.l_config.items()))
 
     def build(self, input_shape):
         in_filters = input_shape[1]
@@ -96,12 +86,11 @@ class ConvNorm(layers.Layer):
         return x
 
 
-class AttnBottleneckBlock(layers.Layer):
+class AttnBottleneckBlock(CustomLayer):
     def __init__(self, filters, strides=1, activation=tf.nn.relu, expansion=4, dp_rate=0, dropout_type='Spatial',
                  groups=1, norm='gn', squeeze_attn=True, frac_dv=0, nheads=8, **kwargs):
         super().__init__(**kwargs)
-        self.l_config = locals()
-        self.l_config.pop('self')
+        self.save_inits(locals())
         self.filters = filters
         self.expansion = expansion
         self.strides = strides
@@ -120,10 +109,6 @@ class AttnBottleneckBlock(layers.Layer):
                 self.dropout = layers.SpatialDropout3D(dp_rate, data_format="channels_first")
             else:
                 self.dropout = layers.Dropout(dp_rate)
-
-    def get_config(self):
-        base_config = super().get_config()
-        return dict(list(base_config.items()) + list(self.l_config.items()))
 
     def build(self, input_shape):
         self.shortcut = self.get_shortcut(input_shape)

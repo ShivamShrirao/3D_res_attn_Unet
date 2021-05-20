@@ -2,9 +2,10 @@ import tensorflow as tf
 from tensorflow.keras import layers
 
 
-class AbsPosEmb(layers.Layer):
+class AbsPosEmb(CustomLayer):
     def __init__(self, dhw, **kwargs):
         super().__init__(**kwargs)
+        self.save_inits(locals())
         self.dhw = dhw
 
     def build(self, input_shape):
@@ -22,17 +23,11 @@ class AbsPosEmb(layers.Layer):
         # [B, N, dv/N, D*H*W] @ [1, 1, dv/N, D*H*W] ->  [B, N, D*H*W, D*H*W]
         return tf.matmul(q, emb, transpose_a=True)
 
-    def get_config(self):
-        l_config = {"dhw": self.dhw}
-        base_config = super().get_config()
-        return dict(list(base_config.items()) + list(l_config.items()))
 
-
-class MHSA3D(layers.Layer):
+class MHSA3D(CustomLayer):
     def __init__(self, dv=None, nheads=8, prev_kq=None, **kwargs):
         super().__init__(**kwargs)
-        self.l_config = locals()
-        self.l_config.pop('self')
+        self.save_inits(locals())
         self.dv = dv
         self.scale = (dv//nheads)**-0.5
         self.nheads = nheads
@@ -60,14 +55,11 @@ class MHSA3D(layers.Layer):
         out = self.restore_shape(out)   # [B, dv, D, H, W]
         return out
 
-    def get_config(self):
-        base_config = super().get_config()
-        return dict(list(base_config.items()) + list(self.l_config.items()))
 
-
-class SqueezeExcite(layers.Layer):
+class SqueezeExcite(CustomLayer):
     def __init__(self, ratio=4, **kwargs):
         super().__init__(**kwargs)
+        self.save_inits(locals())
         self.ratio = ratio
         self.gpool = layers.GlobalAveragePooling3D(data_format='channels_first')
 
@@ -84,8 +76,3 @@ class SqueezeExcite(layers.Layer):
         x = self.restore_shape(x)
         x = inp * x
         return x
-
-    def get_config(self):
-        l_config = {"ratio": self.ratio}
-        base_config = super().get_config()
-        return dict(list(base_config.items()) + list(l_config.items()))

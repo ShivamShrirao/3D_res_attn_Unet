@@ -6,6 +6,18 @@ import imageio
 unique_name_gen = tf.Graph()         # just for some custom naming to get unique names.
 get_name = lambda x: unique_name_gen.unique_name(x)
 
+class CustomLayer(layers.Layer):
+    def save_inits(locs):
+        self.l_config = locs
+        self.l_config.pop('self')
+        self.l_config.pop('kwargs')
+        self.l_config.pop('__class__')
+
+    def get_config(self):
+        base_config = super().get_config()
+        return {**base_config, **self.l_config}
+
+
 def compute_hcf(x, y):
     while y:
         x, y = y, x % y
