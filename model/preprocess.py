@@ -9,13 +9,14 @@ def preprocess_label(lbl):
     ed = lbl == 2
     et = lbl == 4
     lbl = tf.stack([empty, ncr, ed, et])
-    return tf.cast(lbl, tf.uint8)
+    return tf.cast(lbl, tf.float32)
 
 def read_img(path):
     img = sitk.GetArrayFromImage(sitk.ReadImage(path))
     img = tf.convert_to_tensor(img, dtype=tf.float32)
-    img = (img/tf.reduce_max(img))*255
-    return tf.cast(img, tf.uint8)
+    scale = tf.reduce_max(img)/2
+    img = (img/scale) - 1              # -1 to 1
+    return tf.cast(img, tf.float32)
 
 def load_img(path_list):
     img = tf.stack([read_img(path) for path in path_list[:-1]])
@@ -28,7 +29,7 @@ def load_paths(paths):
     img, lbl = load_img([x.decode() for x in paths.numpy()])
     return img, lbl
 
-load_paths_wrapper = lambda x: tf.py_function(load_paths, [x], (tf.uint8, tf.uint8))
+load_paths_wrapper = lambda x: tf.py_function(load_paths, [x], (tf.float32, tf.float32))
 
 # only does in X axis
 def random_rotate3D(img, lbl):          # img [C, D, H, W]
