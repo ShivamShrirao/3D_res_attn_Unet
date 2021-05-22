@@ -15,8 +15,18 @@ class CustomLayer(layers.Layer):
         self._name = get_name(self.name)
 
     def get_config(self):
-        base_config = super().get_config()
-        return {**base_config, **self.l_config}
+        return {**super().get_config(), **self.l_config}
+
+class CustomCLR(tfa.optimizers.Triangular2CyclicalLearningRate):
+    def __init__(self, offset=0, **kwargs):
+        self.offset = offset
+        super().__init__(**kwargs)
+
+    def __call__(self, step):
+        return super().__call__(step + self.offset)
+
+    def get_config(self):
+        return {**super().get_config(), 'offset': self.offset}
 
 
 def compute_hcf(x, y):
