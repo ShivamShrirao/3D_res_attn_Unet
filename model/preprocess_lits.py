@@ -3,30 +3,28 @@ import tensorflow_addons as tfa
 import numpy as np
 import SimpleITK as sitk
 
+
 def preprocess_label(lbl):
     empty = lbl == 0
-    ncr = lbl == 1
-    ed = lbl == 2
-    et = lbl == 4
-    lbl = tf.stack([empty, ncr, ed, et])
+    liv = lbl == 1
+    les = lbl == 2
+    lbl = tf.stack([empty, liv, les])
     return tf.cast(lbl, tf.float32)
 
 def read_img(path):
-    img = sitk.GetArrayFromImage(sitk.ReadImage(path))
+    img = np.load(path)
     img = tf.convert_to_tensor(img, dtype=tf.float32)
-    scale = tf.reduce_max(img)/2
-    img = (img/scale) - 1              # -1 to 1
-    return tf.cast(img, tf.float32)
+    return img
 
 def load_img(path_list):
-    img = tf.stack([read_img(path) for path in path_list[:-1]])
-    lbl = sitk.GetArrayFromImage(sitk.ReadImage(path_list[-1]))
-    lbl = tf.convert_to_tensor(lbl, dtype=tf.uint8)
+    img = read_img(path_list[0])[None,...]
+    lbl = read_img(path_list[-1])
     lbl = preprocess_label(lbl)
-    return img, lbl         # [B, C, D, H, W]
+    return img, lbl         # [C, D, H, W]
 
 def load_paths(paths):
     img, lbl = load_img([x.decode() for x in paths.numpy()])
+    # img, lbl = tf.cast(img, dtype=tf.float32), tf.cast(lbl, dtype=tf.float32)
     return img, lbl
 
 load_paths_wrapper = lambda x: tf.py_function(load_paths, [x], (tf.float32, tf.float32))
