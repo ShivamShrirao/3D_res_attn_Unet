@@ -80,7 +80,7 @@ def make_gif(img, pred, fname, alpha = 0.5):  # [C, D, H, W]
             writer.append_data(i)
 
 def process_pipeline(paths, fname="out.gif"):
-    imgs = load_img(paths)[None,:]      # add batch dimension
+    imgs = load_img(paths.copy())[None,:]      # add batch dimension
     imgs = final_augmentation(imgs)
     preds = model(imgs)[0,1:].numpy()
     img = imgs[0,1].numpy()
