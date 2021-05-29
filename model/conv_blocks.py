@@ -88,7 +88,7 @@ class ConvNorm(CustomLayer):
 
 class AttnBottleneckBlock(CustomLayer):
     def __init__(self, filters, strides=1, activation=tf.nn.relu, expansion=4, dp_rate=0, dropout_type='Spatial',
-                 groups=1, norm='gn', squeeze_attn=True, frac_dv=0, nheads=8, **kwargs):
+                 groups=1, norm='gn', squeeze_attn=True, frac_dv=0, nheads=8, downsample_method="pool" , **kwargs):
         super().__init__(**kwargs)
         self.save_inits(locals())
         self.filters = filters
@@ -103,6 +103,7 @@ class AttnBottleneckBlock(CustomLayer):
         self.dv = int(filters*frac_dv)
         self.conv_filters = filters - self.dv
         self.nheads = nheads
+        self.downsample_method = downsample_method
         self.norm_act = NormAct(activation=activation, norm=norm)
         if dp_rate:
             if dropout_type == 'Spatial':
@@ -132,10 +133,17 @@ class AttnBottleneckBlock(CustomLayer):
         # Main bottleneck network
         x = ConvNorm(self.filters, kernel_size=1, activation=self.activation, norm=self.norm)(inp)
 
-        if self.strides > 1:        # TODO: compare with strided convolution
+        conv_strides = self.strides
+        c_x = x
+        if self.strides > 1:
             x = layers.AveragePooling3D(self.strides, data_format="channels_first")(x)
+            if self.downsample_method == "pool":
+                conv_strides = 1
+                c_x = x
+
         if self.conv_filters > 0:
-            x_s = ConvNorm(self.conv_filters, kernel_size=3, do_norm_act=False, use_bias=False, groups=self.groups)(x)
+            x_s = ConvNorm(self.conv_filters, kernel_size=3, strides=conv_strides, do_norm_act=False,
+                           use_bias=False, groups=self.groups)(c_x)
         if self.dv > 0:
             x = MHSA3D(dv=self.dv, nheads=self.nheads)(x)
             x_s = layers.Concatenate(axis=1)([x, x_s]) if self.conv_filters > 0 else x
