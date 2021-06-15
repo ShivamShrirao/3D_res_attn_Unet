@@ -36,7 +36,6 @@ class CustomCLR(tfa.optimizers.Triangular2CyclicalLearningRate):
 
 class WarmupExponentialDecay(tf.keras.optimizers.schedules.LearningRateSchedule):
     def __init__(self, initial_learning_rate, decay_steps, decay_rate, warmup_steps, **kwargs):
-        self.l_config = locals()
         super().__init__(**kwargs)
         self.initial_learning_rate = initial_learning_rate
         self.decay_steps = decay_steps
@@ -50,7 +49,11 @@ class WarmupExponentialDecay(tf.keras.optimizers.schedules.LearningRateSchedule)
         return self.initial_learning_rate * self.decay_rate ** (step / self.decay_steps)
 
     def get_config(self):
-        return {**super().get_config(), **self.l_config}
+        conf = {'initial_learning_rate': self.initial_learning_rate,
+                'decay_steps': self.decay_steps,
+                'decay_rate': self.decay_rate,
+                'warmup_steps': self.warmup_steps}
+        return {**super().get_config(), **conf}
 
 
 def compute_hcf(x, y):
