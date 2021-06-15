@@ -49,11 +49,10 @@ class WarmupExponentialDecay(tf.keras.optimizers.schedules.LearningRateSchedule)
         return self.initial_learning_rate * self.decay_rate ** (step / self.decay_steps)
 
     def get_config(self):
-        conf = {'initial_learning_rate': self.initial_learning_rate,
+        return {'initial_learning_rate': self.initial_learning_rate,
                 'decay_steps': self.decay_steps,
                 'decay_rate': self.decay_rate,
                 'warmup_steps': self.warmup_steps}
-        return {**super().get_config(), **conf}
 
 
 def compute_hcf(x, y):
