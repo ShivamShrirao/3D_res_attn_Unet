@@ -59,7 +59,7 @@ def compute_hcf(x, y):
         x, y = y, x % y
     return x
 
-def compute_factors(x, y, lim=32):      # get the highest common factor less than equal to `lim`
+def compute_factors(x, y, lim=48):      # get the highest common factor less than equal to `lim`
     hcf = compute_hcf(x, y)
     if isinstance(lim, str):            # max groups
         return hcf
