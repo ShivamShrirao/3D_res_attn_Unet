@@ -41,12 +41,11 @@ class WarmupExponentialDecay(tf.keras.optimizers.schedules.LearningRateSchedule)
         self.decay_steps = decay_steps
         self.decay_rate = decay_rate
         self.warmup_steps = warmup_steps
-
+    
     def __call__(self, step):
-        if step < self.warmup_steps:
-            return self.initial_learning_rate * (1-self.decay_rate) * (step / self.warmup_steps)
-        step-= self.warmup_steps
-        return self.initial_learning_rate * self.decay_rate ** (step / self.decay_steps)
+        return tf.cond(step < self.warmup_steps,
+                       lambda: self.initial_learning_rate * (1-self.decay_rate) * (step / self.warmup_steps),
+                       lambda: self.initial_learning_rate * self.decay_rate ** ((step-self.warmup_steps) / self.decay_steps))
 
     def get_config(self):
         return {'initial_learning_rate': self.initial_learning_rate,
