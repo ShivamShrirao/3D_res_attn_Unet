@@ -5,8 +5,10 @@ import tensorflow_addons as tfa
 import numpy as np
 import imageio
 
+
 unique_name_gen = tf.Graph()         # just for some custom naming to get unique names.
 get_name = lambda x: unique_name_gen.unique_name(x)
+
 
 class CustomLayer(layers.Layer):
     def save_inits(self, locs):
@@ -19,6 +21,7 @@ class CustomLayer(layers.Layer):
     def get_config(self):
         return {**super().get_config(), **self.l_config}
 
+
 class CustomCLR(tfa.optimizers.Triangular2CyclicalLearningRate):
     def __init__(self, offset=0, **kwargs):
         self.offset = offset
@@ -29,6 +32,20 @@ class CustomCLR(tfa.optimizers.Triangular2CyclicalLearningRate):
 
     def get_config(self):
         return {**super().get_config(), 'offset': self.offset}
+
+
+class WarmupExponentialDecay(tf.keras.optimizers.schedules.LearningRateSchedule):
+    def __init__(self, initial_learning_rate, decay_steps, decay_rate, warmup_steps):
+        self.initial_learning_rate = initial_learning_rate
+        self.decay_steps = decay_steps
+        self.decay_rate = decay_rate
+        self.warmup_steps = warmup_steps
+
+    def __call__(self, step):
+        if step < self.warmup_steps:
+            return self.initial_learning_rate * (1-self.decay_rate) * (step / self.warmup_steps)
+        step-= self.warmup_steps
+        return self.initial_learning_rate * self.decay_rate ** (step / self.decay_steps)
 
 
 def compute_hcf(x, y):
