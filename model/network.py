@@ -18,12 +18,12 @@ def enc_dec(x, block, frac_dv, stack_args):     # x(64,64,96,80)
 
 
 def build_network(cfg, block, input_shape=(4,128,192,160), classes=4):
-    stack_args = {'activation': cfg['activation'], 'groups': cfg['groups'], 'norm': cfg['norm'],
-                  'dp_rate': cfg['dp_rate'], 'dropout_type': cfg['dropout_type']}
+    stack_args = {'activation': cfg['activation'], 'groups': cfg['groups'], 'norm': cfg['norm'], 'dp_rate': cfg['dp_rate'],
+                  'dropout_type': cfg['dropout_type'], 'downsample_method': cfg['downsample_method']}
 
     inp = layers.Input(shape=input_shape)                           # ( 4,128,192,160)
     x = inp
-    x = ConvNorm(32, kernel_size=3, strides=2, activation=cfg['activation'], norm=cfg['norm'])(x)   # (32,64,96,80)
+    x = ConvNorm(32, kernel_size=5, strides=2, activation=cfg['activation'], norm=cfg['norm'])(x)   # (32,64,96,80)
     x = ConvNorm(64, kernel_size=3, do_norm_act=False)(x)                               # (64, 64, 96, 80)
 
     x = enc_dec(x, block, cfg['frac_dv'], stack_args)                                   # (64, 64, 96, 80)
