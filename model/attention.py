@@ -70,7 +70,7 @@ class SqueezeExcite(CustomLayer):
         self.fc2 = layers.Dense(self.input_channels, activation='hard_sigmoid')
         self.restore_shape = layers.Reshape(target_shape=(self.input_channels, 1, 1, 1))    # [B, C, D, H, W]
 
-    def call(self, inp=False):
+    def call(self, inp):
         x = self.gpool(inp)
         x = self.fc1(x)
         x = self.fc2(x)

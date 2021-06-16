@@ -45,8 +45,8 @@ class NormAct(CustomLayer):
             activation =  hard_swish
         self.act = layers.Activation(activation)
 
-    def call(self, inp):
-        x = self.norm(inp)
+    def call(self, inp, training=False):
+        x = self.norm(inp, training=training)
         x = self.act(x)
         return x
 
@@ -79,10 +79,10 @@ class ConvNorm(CustomLayer):
         if self.do_norm_act:
             self.lyrs.append(NormAct(activation=self.activation, norm=self.norm, gn_grps=self.gn_grps))
 
-    def call(self, inp):
+    def call(self, inp, training=False):
         x = inp
         for lyr in self.lyrs:
-            x = lyr(x)
+            x = lyr(x, training=training)
         return x
 
 
@@ -158,13 +158,13 @@ class AttnBottleneckBlock(CustomLayer):
         x = ConvNorm(self.out_filters, kernel_size=1, do_norm_act=False)(x)
         return tf.keras.Model(inputs=inp, outputs=x)
 
-    def call(self, inp):
+    def call(self, inp, training=False):
         x = inp
-        x = self.norm_act(x)    # pre-act
+        x = self.norm_act(x, training=training)    # pre-act
 
-        identity = self.shortcut(inp if self.short_inp else x)
+        identity = self.shortcut(inp if self.short_inp else x, training=training)
 
-        x = self.net(x)
+        x = self.net(x, training=training)
         x = x + identity
         return x
 
@@ -224,11 +224,11 @@ class InvertedResBlock(AttnBottleneckBlock):
             shortcut.add(ConvNorm(self.out_filters, kernel_size=1, activation=self.activation, norm=self.norm))
         return shortcut
 
-    def call(self, inp):
+    def call(self, inp, training=False):
         x = inp
 
-        identity = self.shortcut(x)
+        identity = self.shortcut(x, training=training)
 
-        x = self.net(x)
+        x = self.net(x, training=training)
         x = x + identity
         return x

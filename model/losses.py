@@ -30,6 +30,7 @@ def dsc(y_true, y_pred):     # input is (B,C,H,W,D)
     score = (2.0 * intersection + smooth) / (denom + smooth)
     return score
 
+
 class FocalTversky(tf.keras.losses.Loss):
     def __init__(self, alpha=0.7, beta=0.3, gamma=0.75, smooth = 1.0, **kwargs):
         super().__init__(**kwargs)
