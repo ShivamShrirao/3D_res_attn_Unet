@@ -176,9 +176,14 @@ class BasicBlock(AttnBottleneckBlock):
     
     def get_net(self, input_shape):
         inp = layers.Input(shape=input_shape[1:])
+        x = inp
 
-        x = ConvNorm(self.filters, kernel_size=3, strides=self.strides, activation=self.activation, norm=self.norm,
-                     groups=self.groups)(inp)
+        conv_strides = self.strides
+        if self.strides>1 and self.downsample_method == "pool":
+            x = layers.AveragePooling3D(self.strides, data_format="channels_first")(x)
+            conv_strides = 1
+        x = ConvNorm(self.filters, kernel_size=3, strides=conv_strides, activation=self.activation, norm=self.norm,
+                     groups=self.groups)(x)
         if self.squeeze_attn:
             x = SqueezeExcite()(x)
         if self.dropout is not None:
