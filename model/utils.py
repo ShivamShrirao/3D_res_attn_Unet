@@ -54,6 +54,34 @@ class WarmupExponentialDecay(tf.keras.optimizers.schedules.LearningRateSchedule)
                 'warmup_steps': self.warmup_steps}
 
 
+class WarmupExponentialDecayRestarts(tf.keras.optimizers.schedules.LearningRateSchedule):
+    def __init__(self, initial_learning_rate, decay_steps, decay_rate, warmup_steps, restart_rate=0.4, **kwargs):
+        super().__init__(**kwargs)
+        self.initial_learning_rate = initial_learning_rate
+        self.decay_steps = decay_steps
+        self.decay_rate = decay_rate
+        self.warmup_steps = warmup_steps
+        self.restart_rate = restart_rate
+        self.r_steps = self.decay_steps * self.restart_rate
+    
+    def __call__(self, step):
+        restart = step % self.r_steps
+        step, r_frac = tf.cond(step <= restart,
+                               lambda: (step, 1),
+                               lambda: (restart, self.restart_rate/(step//self.r_steps)**2))
+        wstp = self.warmup_steps*r_frac             # fraction after restart
+        return tf.cond(step < wstp,
+                       lambda: self.initial_learning_rate*r_frac * (1-self.decay_rate) * (step / wstp),
+                       lambda: self.initial_learning_rate*r_frac * self.decay_rate ** ((step-wstp) / self.decay_steps))
+
+    def get_config(self):
+        return {'initial_learning_rate': self.initial_learning_rate,
+                'decay_steps': self.decay_steps,
+                'decay_rate': self.decay_rate,
+                'warmup_steps': self.warmup_steps,
+                'restart_rate': self.restart_rate}
+
+
 def compute_hcf(x, y):
     while y:
         x, y = y, x % y

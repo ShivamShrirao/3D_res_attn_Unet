@@ -17,7 +17,7 @@ width = 160 # 240
 channel_names = ['_t1.', '_t2.', '_t1ce.', '_flair.']   # do not change order
 # T1-weighted (T1), post-contrast T1-weighted (T1ce), T2-weighted (T2), and T2 Fluid Attenuated Inversion Recovery (FLAIR)
 out_channels = ['empty', 'ncr', 'ed', 'et']
-#  necrotic and non-enhancing tumor core (NCR), peritumoral edema (ED), GD-enhancing tumor(ET)
+# necrotic and non-enhancing tumor core (NCR), peritumoral edema (ED), GD-enhancing tumor(ET)
 
 # model.save("model-best.h5", include_optimizer=False)
 
