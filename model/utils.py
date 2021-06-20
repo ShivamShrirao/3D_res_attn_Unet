@@ -65,9 +65,9 @@ class WarmupExponentialDecayRestarts(tf.keras.optimizers.schedules.LearningRateS
         self.r_steps = self.decay_steps * self.restart_rate
     
     def __call__(self, step):
-        restart = step % self.r_steps
+        restart = int(step % self.r_steps)
         step, r_frac = tf.cond(step <= restart,
-                               lambda: (step, 1),
+                               lambda: (step, 1.),
                                lambda: (restart, self.restart_rate/(step//self.r_steps)**2))
         wstp = self.warmup_steps*r_frac             # fraction after restart
         return tf.cond(step < wstp,
