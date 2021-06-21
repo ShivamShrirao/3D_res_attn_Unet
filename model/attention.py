@@ -54,7 +54,7 @@ class MHSA3D(CustomLayer):
         # [B, N, dv/N, D*H*W] @ [B, N, D*H*W, D*H*W] -> [B, N, dv/N, D*H*W]
         out = tf.matmul(v, attn, transpose_b=True)  # [B, N, dv/N, D*H*W]
         out = self.restore_shape(out)   # [B, dv, D, H, W]
-        return out
+        return out, attn
 
 
 class SqueezeExcite(CustomLayer):

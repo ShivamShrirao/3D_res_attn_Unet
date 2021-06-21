@@ -145,7 +145,7 @@ class AttnBottleneckBlock(CustomLayer):
             x_s = ConvNorm(self.conv_filters, kernel_size=3, strides=conv_strides, do_norm_act=False,
                            use_bias=False, groups=self.groups)(c_x)
         if self.dv > 0:
-            x = MHSA3D(dv=self.dv, nheads=self.nheads)(x)
+            x, attn = MHSA3D(dv=self.dv, nheads=self.nheads)(x)
             x_s = layers.Concatenate(axis=1)([x, x_s]) if self.conv_filters > 0 else x
 
         x = NormAct(activation=self.activation, norm=self.norm)(x_s)
