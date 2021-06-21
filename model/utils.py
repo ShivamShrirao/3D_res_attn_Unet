@@ -105,8 +105,6 @@ def get_gif(img, lbl, pred, fname, alpha = 0.5):  # [C, D, H, W]
     img = np.stack((img,)*3, axis=-1)
     lbl = lbl.transpose(1,2,3,0)            # [D, H, W, C]
     pred = pred.transpose(1,2,3,0)          # [D, H, W, C]
-    lbl[...,0] = 0
-    pred[...,0] = 0
     with imageio.get_writer(fname, mode='I', fps=10) as writer:
         t_images = (img + lbl*(1-alpha)).astype(np.uint8)
         p_images = (img + pred*(1-alpha)).astype(np.uint8)

@@ -31,7 +31,7 @@ def build_network(cfg, block, input_shape=(4,128,192,160), classes=4):
     x = NormAct(activation=cfg['activation'], norm=cfg['norm'])(x)
     x = layers.UpSampling3D(data_format="channels_first")(x)                            # (64,128,192,160)
     x = ConvNorm(16, kernel_size=3, activation=cfg['activation'], norm=cfg['norm'])(x)  # (16,128,192,160)
-    x = ConvNorm(classes, kernel_size=3, do_norm_act=False)(x)                          #(3,128,192,160)
+    x = ConvNorm(classes, kernel_size=3, do_norm_act=False)(x)                          # (3,128,192,160)
     x = layers.Softmax(axis=1)(x)         # softmax cause each pixel has unique class, no overlap with other classes, verified.
 
     return tf.keras.Model(inputs=inp, outputs=x)

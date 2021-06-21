@@ -74,7 +74,6 @@ def make_gif(img, pred, fname, alpha = 0.5):  # [C, D, H, W]
     img = img * alpha
     img = np.stack((img,)*3, axis=-1)
     pred = pred.transpose(1,2,3,0)          # [D, H, W, C]
-    pred[...,0] = 0
     with imageio.get_writer(fname, mode='I', fps=10) as writer:
         p_images = (img + pred*(1-alpha)).astype(np.uint8)
         for i in p_images:
