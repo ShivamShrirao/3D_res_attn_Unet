@@ -112,3 +112,28 @@ def get_gif(img, lbl, pred, fname, alpha = 0.5):  # [C, D, H, W]
         o = o.reshape(*o.shape[:2], -1, o.shape[-1])
         for i in o:
             writer.append_data(i)
+
+
+# def compute_dsc_for(m1,m2,res):
+#     for a,b in zip(m1,m2):
+#         res.append(dsc(a[None,:], b[None,:], ignore_first=False).numpy())
+#         res.append(dsc(a[None,:], b[None,:], ignore_first=False).numpy())
+
+
+# ets, tcs, wts = [], [], []
+# for i, (x,y) in tqdm(enumerate(train_ds)):
+#     if i==steps_per_epoch:
+#         break
+#     o = model(x)
+#     del x
+#     o = tf.cast(o, tf.float32)
+#     et_y, et_o = y[:,3:4], o[:,3:4]
+#     compute_dsc_for(et_y, et_o, ets)
+#     tc_y, tc_o = et_y+y[:,1:2], et_o+o[:,1:2]
+#     del et_y, et_o
+#     compute_dsc_for(tc_y, tc_o, tcs)
+#     wt_y, wt_o = tc_y+y[:,2:3], tc_o+o[:,2:3]
+#     del tc_y, tc_o
+#     compute_dsc_for(wt_y, wt_o, wts)
+#     del wt_y, wt_o, y, o
+#     break

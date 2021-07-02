@@ -19,6 +19,10 @@ channel_names = ['_t1.', '_t2.', '_t1ce.', '_flair.']   # do not change order
 out_channels = ['empty', 'ncr', 'ed', 'et']
 # necrotic and non-enhancing tumor core (NCR), peritumoral edema (ED), GD-enhancing tumor(ET)
 
+# ET : available
+# TC : ET + NCR
+# WT : ET + NCR + ED
+
 # model.save("model-best.h5", include_optimizer=False)
 
 model = tf.keras.models.load_model("model-best.h5", custom_objects={'ConvNorm': ConvNorm,
@@ -82,8 +86,8 @@ def make_gif(img, pred, fname, alpha = 0.5):  # [C, D, H, W]
 def process_pipeline(paths, fname="out.gif"):
     imgs = load_img(paths.copy())[None,:]      # add batch dimension
     imgs = final_augmentation(imgs)
-    preds = model(imgs)[0,1:].numpy()
-    img = imgs[0,1].numpy()
+    preds = model(imgs)[0,1:]._numpy()
+    img = imgs[0,1]._numpy()
     mn = img.min()
     mx = img.max()
     img = (img - mn)/(mx - mn) * 255

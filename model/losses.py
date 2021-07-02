@@ -14,9 +14,12 @@ def cce(y_true, y_pred):
 
 
 # This func is just for metric, First channel is empty so is ignored in dice coefficient calculation.
-def dsc(y_true, y_pred):     # input is (B,C,H,W,D)
-    y_true = tf.cast(y_true[:,1:], tf.float32)
-    y_pred = tf.cast(y_pred[:,1:], tf.float32)
+def dsc(y_true, y_pred, ignore_first=True):     # input is (B,C,H,W,D)
+    if ignore_first:
+        y_true = y_true[:,1:]
+        y_pred = y_pred[:,1:]
+    y_true = tf.cast(y_true, tf.float32)
+    y_pred = tf.cast(y_pred, tf.float32)
     C = tf.shape(y_true)[1]
     y_true_T = tf.transpose(y_true, (1,0,2,3,4))    # (C, B,H,W,D)
     y_pred_T = tf.transpose(y_pred, (1,0,2,3,4))    # (C, B,H,W,D)
